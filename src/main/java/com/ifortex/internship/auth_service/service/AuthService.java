@@ -57,13 +57,14 @@ public interface AuthService {
    * authentication cookies.
    *
    * <p>This method retrieves the currently authenticated user's details from the {@link
-   * SecurityContextHolder}. If the user is authenticated, their refresh tokens are deleted from the
+   * SecurityContextHolder}. If the user is authenticated, their refresh token is deleted from the
    * database, and cookies for access and refresh tokens are cleared. If the user is not
    * authenticated (anonymous), a {@link UserNotAuthenticatedException} is thrown.
    *
+   * @param refreshToken the refresh token of the user that will be deleted
    * @return a AuthResponse containing the cleared access and refresh token cookies and the user ID
    *     of the logged-out user.
    * @throws UserNotAuthenticatedException if the user is not authenticated.
    */
-  AuthResponse logoutUser();
+  AuthResponse logoutUser(String refreshToken);
 }

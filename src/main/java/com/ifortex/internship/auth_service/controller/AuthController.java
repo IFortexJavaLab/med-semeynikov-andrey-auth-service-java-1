@@ -59,11 +59,11 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<?> logout() {
+  public ResponseEntity<?> logout(@CookieValue("refreshToken") String refreshToken) {
 
     log.info("Logout attempt");
 
-    AuthResponse authResponse = authService.logoutUser();
+    AuthResponse authResponse = authService.logoutUser(refreshToken);
 
     HttpHeaders headers = new HttpHeaders();
     headers.add(

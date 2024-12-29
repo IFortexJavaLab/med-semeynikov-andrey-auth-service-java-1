@@ -14,11 +14,11 @@ import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.Role;
 import com.ifortex.internship.auth_service.model.User;
 import com.ifortex.internship.auth_service.model.UserDetailsImpl;
+import com.ifortex.internship.auth_service.repository.RefreshTokenRepository;
 import com.ifortex.internship.auth_service.repository.RoleRepository;
 import com.ifortex.internship.auth_service.repository.UserRepository;
 import com.ifortex.internship.auth_service.service.AuthService;
 import com.ifortex.internship.auth_service.service.CookieService;
-import com.ifortex.internship.auth_service.service.RefreshTokenService;
 import com.ifortex.internship.auth_service.service.TokenService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
   private final TokenService tokenService;
   private final AuthenticationManager authenticationManager;
   private final CookieService cookieService;
-  private final RefreshTokenService refreshTokenService;
+  private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
   private final RoleRepository roleRepository;
 
@@ -130,12 +130,12 @@ public class AuthServiceImpl implements AuthService {
         new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), userDetails.getId());
   }
 
-  public AuthResponse logoutUser() {
+  public AuthResponse logoutUser(String refreshToken) {
     Object principle = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    Long userId;
     if (!"anonymousUser".equals(principle.toString())) {
-      userId = ((UserDetailsImpl) principle).getId();
-      refreshTokenService.deleteTokensByUserId(userId);
+      log.debug("Deleting refresh token");
+      refreshTokenRepository.deleteRefreshTokenByToken(refreshToken);
+      log.debug("Refresh token deleted successfully");
     } else {
       log.warn("Logout attempt by anonymous or unauthenticated user.");
       throw new UserNotAuthenticatedException("User is not authenticated. Please log in.");
@@ -144,7 +144,7 @@ public class AuthServiceImpl implements AuthService {
     ResponseCookie accessTokenCookie = cookieService.deleteAccessTokenCookie();
     ResponseCookie refreshTokenCookie = cookieService.deleteRefreshTokenCookie();
 
-    return new AuthResponse(
-        new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), userId);
+    // TODO what should i return?
+    return new AuthResponse(new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), null);
   }
 }
