@@ -4,7 +4,9 @@ import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
 import com.ifortex.internship.auth_service.exception.custom.TokensRefreshException;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.User;
+import java.util.Collection;
 import java.util.List;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Service interface for managing JWT and refresh tokens.
@@ -60,6 +62,11 @@ public interface TokenService {
    */
   String getUsernameFromToken(String token);
 
-  // feature add javadoc and approve method
-  List<String> getRolesFromToken(String jwt);
+  /**
+   * Extracts user roles from a JWT token and converts them to granted authorities.
+   *
+   * @param token the JWT token
+   * @return a collection of {@link GrantedAuthority} representing the user's roles
+   */
+  Collection<? extends GrantedAuthority> getAuthorityFromToken(String token);
 }

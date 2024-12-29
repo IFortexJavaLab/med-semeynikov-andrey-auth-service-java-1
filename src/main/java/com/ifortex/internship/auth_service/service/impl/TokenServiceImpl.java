@@ -18,12 +18,15 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -132,12 +135,21 @@ public class TokenServiceImpl implements TokenService {
         .getSubject();
   }
 
-  public List<String> getRolesFromToken(String token) {
+  public Collection<? extends GrantedAuthority> getAuthorityFromToken(String token) {
+
+    log.debug("Getting authorities from access token");
+
     final Claims claims =
-        Jwts.parser().verifyWith(getSigningKey()).build()
-                .parseSignedClaims(token).getPayload();
+        Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
     List<String> roles = claims.get("roles", List.class);
+
     log.debug("Got roles from token: {}", roles.toString());
-    return roles;
+
+    List<SimpleGrantedAuthority> authorities =
+        roles.stream().map(SimpleGrantedAuthority::new).toList();
+
+    log.debug("Made authority from roles: {}", authorities);
+
+    return authorities;
   }
 }

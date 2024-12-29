@@ -118,7 +118,6 @@ public class AuthServiceImpl implements AuthService {
     log.debug("Access token generated successfully for user: {}", userDetails.getEmail());
 
     RefreshToken newRefreshToken = tokenService.createRefreshToken(userDetails.getId());
-    log.debug("Refresh token generated successfully for user: {}", userDetails.getEmail());
 
     ResponseCookie accessTokenCookie = cookieService.createAccessTokenCookie(newAccessToken);
     ResponseCookie refreshTokenCookie =

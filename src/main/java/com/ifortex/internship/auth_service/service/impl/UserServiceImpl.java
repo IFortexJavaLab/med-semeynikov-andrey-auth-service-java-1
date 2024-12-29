@@ -50,6 +50,8 @@ public class UserServiceImpl implements UserService {
 
   public RegistrationResponse changePassword(ChangePasswordRequest request, String userEmail) {
 
+    log.debug("Changing password for user with email: {}", userEmail);
+
     User user = findUserByEmail(userEmail);
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
@@ -79,6 +81,8 @@ public class UserServiceImpl implements UserService {
     user.setPassword(newEncodedPassword);
     user.setUpdatedAt(LocalDateTime.now());
     userRepository.save(user);
+
+    log.info("User with email: {} successfully changed password", userEmail);
 
     return new RegistrationResponse("Changed password successfully", user.getId());
   }
