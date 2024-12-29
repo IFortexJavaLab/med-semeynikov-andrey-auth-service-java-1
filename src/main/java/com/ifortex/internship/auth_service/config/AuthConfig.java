@@ -39,12 +39,18 @@ public class AuthConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            auth -> auth.requestMatchers("/auth/**").permitAll().anyRequest().authenticated());
+            // TODO safe endpoints users
+            auth ->
+                auth.requestMatchers("/api/v1/auth/**", "/api/v1/users/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated());
 
     http.authenticationProvider(authenticationProvider());
 
-    http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-    
+    http.addFilterBefore(
+        authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
     return http.build();
   }
 

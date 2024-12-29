@@ -7,6 +7,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.BAD_REQUEST)
 public class UserNotFoundException extends AuthServiceException {
   public UserNotFoundException(Long userId) {
-    super("User with email " + userId + " not found.");
+    super(String.format("User with email: %d not found.", userId));
+  }
+
+  public UserNotFoundException(String userEmail) {
+    super(String.format("User with email: %s not found.", userEmail));
   }
 }
