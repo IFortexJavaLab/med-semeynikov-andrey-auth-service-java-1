@@ -8,6 +8,7 @@ import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
 import com.ifortex.internship.auth_service.service.AuthService;
 import com.ifortex.internship.auth_service.service.TokenService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -19,16 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
   private final AuthService authService;
   private final TokenService tokenService;
-
-  public AuthController(AuthService authService, TokenService tokenService) {
-    this.authService = authService;
-    this.tokenService = tokenService;
-  }
 
   @PostMapping("/register")
   public ResponseEntity<RegistrationResponse> addNewUser(

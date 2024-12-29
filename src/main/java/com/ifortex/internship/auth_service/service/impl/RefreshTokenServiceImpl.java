@@ -1,35 +1,30 @@
 package com.ifortex.internship.auth_service.service.impl;
 
-import com.ifortex.internship.auth_service.exception.custom.RefreshTokenNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.RefreshTokenExpiredException;
+import com.ifortex.internship.auth_service.exception.custom.RefreshTokenNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotFoundException;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.User;
 import com.ifortex.internship.auth_service.repository.RefreshTokenRepository;
 import com.ifortex.internship.auth_service.repository.UserRepository;
 import com.ifortex.internship.auth_service.service.RefreshTokenService;
+import java.time.Instant;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.UUID;
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
   private final RefreshTokenRepository refreshTokenRepository;
   private final UserRepository userRepository;
 
   @Value("${app.refreshTokenExpirationS}")
   private int refreshTokenDurationS;
-
-  public RefreshTokenServiceImpl(
-      RefreshTokenRepository refreshTokenRepository, UserRepository userRepository) {
-    this.refreshTokenRepository = refreshTokenRepository;
-    this.userRepository = userRepository;
-  }
 
   @Transactional
   public RefreshToken createRefreshToken(Long userId) {

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,17 +17,13 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
+@RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
 
   private static final int BEARER_PREFIX_LENGTH = 7;
 
   private final TokenService tokenService;
   private final UserDetailsServiceImpl userDetailsService;
-
-  public AuthTokenFilter(TokenService tokenService, UserDetailsServiceImpl userDetailsService) {
-    this.tokenService = tokenService;
-    this.userDetailsService = userDetailsService;
-  }
 
   @Override
   protected void doFilterInternal(
