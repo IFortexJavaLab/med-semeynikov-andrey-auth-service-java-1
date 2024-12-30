@@ -3,7 +3,7 @@ package com.ifortex.internship.auth_service.service;
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
-import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
+import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
@@ -33,11 +33,11 @@ public interface AuthService {
    *
    * @param request the {@link RegistrationRequest} containing the user's email, password, and
    *     confirmation password
-   * @return a {@link RegistrationResponse} containing the success message and user ID
+   * @return a {@link SuccessResponse} containing the success message and user ID
    * @throws EmailAlreadyRegistered if the email is already registered
    * @throws PasswordMismatchException if the password does not match its confirmation
    */
-  RegistrationResponse register(RegistrationRequest request);
+  SuccessResponse register(RegistrationRequest request);
 
   /**
    * Authenticates a user based on their login credentials.

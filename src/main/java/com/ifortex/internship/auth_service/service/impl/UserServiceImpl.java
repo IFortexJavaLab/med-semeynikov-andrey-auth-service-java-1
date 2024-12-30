@@ -1,7 +1,7 @@
 package com.ifortex.internship.auth_service.service.impl;
 
 import com.ifortex.internship.auth_service.dto.request.ChangePasswordRequest;
-import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
+import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.IncorrectPasswordException;
 import com.ifortex.internship.auth_service.exception.custom.NewPasswordMatchesCurrentException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
@@ -9,12 +9,11 @@ import com.ifortex.internship.auth_service.exception.custom.UserNotFoundExceptio
 import com.ifortex.internship.auth_service.model.User;
 import com.ifortex.internship.auth_service.repository.UserRepository;
 import com.ifortex.internship.auth_service.service.UserService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -48,7 +47,7 @@ public class UserServiceImpl implements UserService {
     return user;
   }
 
-  public RegistrationResponse changePassword(ChangePasswordRequest request, String userEmail) {
+  public SuccessResponse changePassword(ChangePasswordRequest request, String userEmail) {
 
     log.debug("Changing password for user with email: {}", userEmail);
 
@@ -84,6 +83,13 @@ public class UserServiceImpl implements UserService {
 
     log.info("User with email: {} successfully changed password", userEmail);
 
-    return new RegistrationResponse("Changed password successfully", user.getId());
+    // feature refactor it to generate link dynamically
+    String link = "http://localhost:8081/api/v1/auth/login";
+
+    return SuccessResponse.builder()
+        .message(
+            String.format(
+                "Changed password successfully, please login again using this link: %s", link))
+        .build();
   }
 }

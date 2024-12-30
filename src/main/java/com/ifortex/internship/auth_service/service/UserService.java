@@ -1,7 +1,7 @@
 package com.ifortex.internship.auth_service.service;
 
 import com.ifortex.internship.auth_service.dto.request.ChangePasswordRequest;
-import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
+import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.IncorrectPasswordException;
 import com.ifortex.internship.auth_service.exception.custom.NewPasswordMatchesCurrentException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
@@ -43,7 +43,7 @@ public interface UserService {
    * @param request the {@link ChangePasswordRequest} containing the current password, new password,
    *     and password confirmation
    * @param userEmail the email address of the user requesting the password change
-   * @return a {@link RegistrationResponse} indicating the success of the operation
+   * @return a {@link SuccessResponse} indicating the success of the operation
    * @throws IncorrectPasswordException if the current password does not match the user's existing
    *     password
    * @throws NewPasswordMatchesCurrentException if the new password matches the current password
@@ -51,5 +51,5 @@ public interface UserService {
    */
 
   // todo refactor what should i return
-  RegistrationResponse changePassword(ChangePasswordRequest request, String userEmail);
+  SuccessResponse changePassword(ChangePasswordRequest request, String userEmail);
 }

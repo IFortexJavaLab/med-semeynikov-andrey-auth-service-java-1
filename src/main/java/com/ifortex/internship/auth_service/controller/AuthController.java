@@ -4,7 +4,7 @@ import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
-import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
+import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.service.AuthService;
 import com.ifortex.internship.auth_service.service.TokenService;
 import jakarta.validation.Valid;
@@ -28,14 +28,15 @@ public class AuthController {
   private final TokenService tokenService;
 
   @PostMapping("/register")
-  public ResponseEntity<RegistrationResponse> addNewUser(
-      @RequestBody @Valid RegistrationRequest request) {
+  public ResponseEntity<?> register(@RequestBody @Valid RegistrationRequest request) {
 
     log.info("Received registration request for email: {}", request.getEmail());
 
-    RegistrationResponse response = authService.register(request);
+    SuccessResponse response = authService.register(request);
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(
+        String.format(
+            "User with email: %s has been successfully registered", response.getMessage()));
   }
 
   @PostMapping("/login")
@@ -55,7 +56,9 @@ public class AuthController {
     log.debug("Refresh and access tokens set in cookie for email: {}", loginRequest.getEmail());
     log.info("User: {} successfully logged in", loginRequest.getEmail());
 
-    return ResponseEntity.ok().headers(headers).body("Login successful");
+    return ResponseEntity.ok()
+        .headers(headers)
+        .body(String.format("Login successful with email: %s", loginRequest.getEmail()));
   }
 
   @PostMapping("/logout")

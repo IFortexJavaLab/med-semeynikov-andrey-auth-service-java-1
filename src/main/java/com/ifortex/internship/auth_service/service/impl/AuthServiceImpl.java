@@ -4,7 +4,7 @@ import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
-import com.ifortex.internship.auth_service.dto.response.RegistrationResponse;
+import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.RoleNotFoundException;
@@ -49,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
   private final RoleRepository roleRepository;
 
   @Transactional
-  public RegistrationResponse register(RegistrationRequest request) {
+  public SuccessResponse register(RegistrationRequest request) {
 
     log.debug("Register user: {}", request.getEmail());
     if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -90,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
     log.debug("User: {} saved to db successfully", request.getEmail());
 
     log.info("User: {} register successfully", request.getEmail());
-    return new RegistrationResponse("Registration successful.", user.getId());
+    return SuccessResponse.builder().message(user.getEmail()).build();
   }
 
   public AuthResponse authenticateUser(LoginRequest loginRequest) {
@@ -144,7 +144,6 @@ public class AuthServiceImpl implements AuthService {
     ResponseCookie accessTokenCookie = cookieService.deleteAccessTokenCookie();
     ResponseCookie refreshTokenCookie = cookieService.deleteRefreshTokenCookie();
 
-    // TODO what should i return?
     return new AuthResponse(new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), null);
   }
 }
