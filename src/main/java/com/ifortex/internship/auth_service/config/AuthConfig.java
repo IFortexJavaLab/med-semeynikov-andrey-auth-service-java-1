@@ -1,5 +1,6 @@
 package com.ifortex.internship.auth_service.config;
 
+import com.ifortex.internship.auth_service.filter.AuthEntryPointJwt;
 import com.ifortex.internship.auth_service.filter.AuthTokenFilter;
 import com.ifortex.internship.auth_service.service.TokenService;
 import com.ifortex.internship.auth_service.service.impl.UserDetailsServiceImpl;
@@ -27,6 +28,7 @@ public class AuthConfig {
 
   private final TokenService tokenService;
   private final UserDetailsServiceImpl userDetailsService;
+  private final AuthEntryPointJwt unauthorizedHandler;
 
   @Bean
   public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -39,12 +41,12 @@ public class AuthConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            // TODO safe endpoints users
             auth ->
                 auth.requestMatchers("/api/v1/auth/**", "/api/v1/users/**")
                     .permitAll()
                     .anyRequest()
-                    .authenticated());
+                    .authenticated())
+        .exceptionHandling(c -> c.authenticationEntryPoint(unauthorizedHandler));
 
     http.authenticationProvider(authenticationProvider());
 
