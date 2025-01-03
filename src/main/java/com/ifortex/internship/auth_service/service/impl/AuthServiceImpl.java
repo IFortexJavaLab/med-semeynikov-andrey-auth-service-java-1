@@ -73,10 +73,10 @@ public class AuthServiceImpl implements AuthService {
     // user do not send role during registration
     Role nonSubscribedUser =
         roleRepository
-            .findByName(ERole.NON_SUBSCRIBED_USER)
+            .findByName(ERole.ROLE_NON_SUBSCRIBED_USER)
             .orElseThrow(
                 () -> {
-                  log.error("Role: {} is not found", ERole.NON_SUBSCRIBED_USER);
+                  log.error("Role: {} is not found", ERole.ROLE_NON_SUBSCRIBED_USER);
                   return new RoleNotFoundException("Role NON_SUBSCRIBED_USER is not found");
                 });
 

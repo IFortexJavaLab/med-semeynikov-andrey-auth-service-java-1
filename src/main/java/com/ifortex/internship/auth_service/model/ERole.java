@@ -1,9 +1,9 @@
 package com.ifortex.internship.auth_service.model;
 
 public enum ERole {
-  SUPER_ADMIN,
-  ADMIN,
-  PARAMEDIC,
-  NON_SUBSCRIBED_USER,
-  SUBSCRIBED_USER
+  ROLE_SUPER_ADMIN,
+  ROLE_ADMIN,
+  ROLE_PARAMEDIC,
+  ROLE_NON_SUBSCRIBED_USER,
+  ROLE_SUBSCRIBED_USER
 }

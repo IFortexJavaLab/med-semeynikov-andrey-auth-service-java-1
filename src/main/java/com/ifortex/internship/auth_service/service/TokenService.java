@@ -4,6 +4,7 @@ import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
 import com.ifortex.internship.auth_service.exception.custom.TokensRefreshException;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.User;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
@@ -47,6 +48,14 @@ public interface TokenService {
   boolean isValid(String authToken);
 
   /**
+   * Checks whether the provided JWT token is expired.
+   *
+   * @param authToken the JWT token to be checked
+   * @return {@code true} if the token is expired, {@code false} otherwise
+   */
+  boolean isExpired(String authToken);
+
+  /**
    * Creates a new refresh token for the specified user ID.
    *
    * @param userId the ID of the user for whom the refresh token is created
@@ -69,4 +78,12 @@ public interface TokenService {
    * @return a collection of {@link GrantedAuthority} representing the user's roles
    */
   Collection<? extends GrantedAuthority> getAuthorityFromToken(String token);
+
+  /**
+   * Extracts the refresh token from the cookies in the given HTTP request.
+   *
+   * @param request the {@link HttpServletRequest} containing the cookies
+   * @return the value of the "refreshToken" cookie if present, or {@code null} if the cookie is not found
+   */
+  String getRefreshTokenFromRequest(HttpServletRequest request);
 }

@@ -89,7 +89,8 @@ public class UserServiceImpl implements UserService {
     return SuccessResponse.builder()
         .message(
             String.format(
-                "Changed password successfully, please login again using this link: %s", link))
+                "Changed password successfully for user with email %s, please login again using this link: %s",
+                user.getEmail(), link))
         .build();
   }
 }

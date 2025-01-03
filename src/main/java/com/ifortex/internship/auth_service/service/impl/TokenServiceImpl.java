@@ -2,8 +2,9 @@ package com.ifortex.internship.auth_service.service.impl;
 
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
 import com.ifortex.internship.auth_service.exception.AuthServiceException;
+import com.ifortex.internship.auth_service.exception.custom.InvalidJwtTokenException;
+import com.ifortex.internship.auth_service.exception.custom.ReauthenticationRequiredException;
 import com.ifortex.internship.auth_service.exception.custom.RefreshTokenExpiredException;
-import com.ifortex.internship.auth_service.exception.custom.TokensRefreshException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotFoundForRefreshTokenException;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.User;
@@ -18,9 +19,13 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,11 +92,11 @@ public class TokenServiceImpl implements TokenService {
 
       return new CookieTokensResponse(accessTokenCookie, refreshTokenCookie);
     } catch (RefreshTokenExpiredException e) {
-      log.error(e.getMessage());
+      log.debug(e.getMessage());
       throw e;
     } catch (AuthServiceException e) {
-      log.error("Failed to refresh tokens: {}", e.getMessage());
-      throw new TokensRefreshException("Failed to refresh tokens.");
+      throw new ReauthenticationRequiredException(
+          "Your session has expired or your token is invalid. Please log in again.");
     }
   }
 
@@ -103,18 +108,34 @@ public class TokenServiceImpl implements TokenService {
       return true;
     } catch (SignatureException e) {
       log.debug("Invalid JWT signature: {}", e.getMessage());
-      throw e;
+      throw new InvalidJwtTokenException("JWT token is invalid. Please log in again.");
     } catch (MalformedJwtException e) {
       log.debug("Invalid JWT token: {}", e.getMessage());
-    } catch (ExpiredJwtException e) {
-      log.debug("JWT token is expired: {}", e.getMessage());
+      throw new InvalidJwtTokenException("JWT token is malformed. Please log in again.");
     } catch (UnsupportedJwtException e) {
       log.debug("JWT token is unsupported: {}", e.getMessage());
+      throw new InvalidJwtTokenException("JWT token is unsupported. Please log in again.");
     } catch (IllegalArgumentException e) {
       log.debug("JWT claims string is empty: {}", e.getMessage());
+      throw new InvalidJwtTokenException("JWT claims string is empty. Please log in again.");
+    } catch (ExpiredJwtException e) {
+      log.debug("JWT token is expired: {}", e.getMessage());
     }
 
     return false;
+  }
+
+  public boolean isExpired(String authToken) {
+
+    try {
+      Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(authToken);
+      return false;
+    } catch (ExpiredJwtException e) {
+      log.debug("JWT token is expired: {}", e.getMessage());
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private SecretKey getSigningKey() {
@@ -151,5 +172,15 @@ public class TokenServiceImpl implements TokenService {
     log.debug("Made authority from roles: {}", authorities);
 
     return authorities;
+  }
+
+  public String getRefreshTokenFromRequest(HttpServletRequest request) {
+
+    return Optional.ofNullable(request.getCookies()).stream()
+        .flatMap(Stream::of)
+        .filter(cookie -> "refreshToken".equals(cookie.getName()))
+        .map(Cookie::getValue)
+        .findFirst()
+        .orElse(null);
   }
 }

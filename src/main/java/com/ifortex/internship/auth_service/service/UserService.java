@@ -50,6 +50,5 @@ public interface UserService {
    * @throws PasswordMismatchException if the new password and its confirmation do not match
    */
 
-  // todo refactor what should i return
   SuccessResponse changePassword(ChangePasswordRequest request, String userEmail);
 }

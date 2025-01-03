@@ -47,8 +47,8 @@ public class UserController {
         HttpHeaders.SET_COOKIE,
         authResponse.getCookieTokensResponse().getRefreshCookie().toString());
 
-    log.debug("Clean tokens set in cookie for user with id = {}", authResponse.getUserId());
-    log.info("Logout successful for user with id = {}", authResponse.getUserId());
+    log.debug("Clean tokens set in cookie for user with email = {}", userEmail);
+    log.info("Logout successful for user with email = {}", userEmail);
 
     return ResponseEntity.ok().headers(headers).body(response);
   }

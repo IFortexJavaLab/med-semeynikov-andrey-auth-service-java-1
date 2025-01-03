@@ -1,6 +1,8 @@
 package com.ifortex.internship.auth_service.exception;
 
 import com.ifortex.internship.auth_service.exception.custom.TokensRefreshException;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,12 +10,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
@@ -34,6 +34,8 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(ex.getMessage(), status);
   }
 
+  // feature handle authentication exceptions instead of UsernameNotFoundException,
+  // BadCredentialsException
   @ExceptionHandler(UsernameNotFoundException.class)
   public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex) {
     log.debug("UsernameNotFoundException occurred: {}", ex.getMessage());
@@ -52,7 +54,7 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, String>> handleValidationExceptions(
       MethodArgumentNotValidException ex) {
 
-    log.error(ex.getMessage());
+    log.debug(ex.getMessage());
 
     BindingResult bindingResult = ex.getBindingResult();
 
@@ -62,6 +64,14 @@ public class GlobalExceptionHandler {
         .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
     return ResponseEntity.badRequest().body(errors);
+  }
+
+  // feature what should user see?
+  @ExceptionHandler(MissingRequestCookieException.class)
+  public ResponseEntity<Object> handleMissingRequestCookieException(
+      MissingRequestCookieException ex) {
+    String errorMessage = String.format("Required cookie '%s' is missing", ex.getCookieName());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
   }
 
   @ExceptionHandler(Exception.class)
