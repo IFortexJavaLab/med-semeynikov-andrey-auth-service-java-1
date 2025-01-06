@@ -1,14 +1,19 @@
 package com.ifortex.internship.auth_service.service.impl;
 
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetTokenValidationDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
 import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
+import com.ifortex.internship.auth_service.email.EmailService;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
+import com.ifortex.internship.auth_service.exception.custom.EmailSendException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.RoleNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
+import com.ifortex.internship.auth_service.exception.custom.UserNotFoundException;
 import com.ifortex.internship.auth_service.model.ERole;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.Role;
@@ -19,12 +24,17 @@ import com.ifortex.internship.auth_service.repository.RoleRepository;
 import com.ifortex.internship.auth_service.repository.UserRepository;
 import com.ifortex.internship.auth_service.service.AuthService;
 import com.ifortex.internship.auth_service.service.CookieService;
+import com.ifortex.internship.auth_service.service.RedisService;
 import com.ifortex.internship.auth_service.service.TokenService;
+import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,7 +57,13 @@ public class AuthServiceImpl implements AuthService {
   private final RefreshTokenRepository refreshTokenRepository;
   private final PasswordEncoder passwordEncoder;
   private final RoleRepository roleRepository;
-
+  private final EmailService emailService;
+  private final RedisService redisService;
+  
+  @Getter
+  @Value("${app.otp.expirationMinutes}")
+  private int expirationMinutes;
+  
   @Transactional
   public SuccessResponse register(RegistrationRequest request) {
 
@@ -145,5 +161,66 @@ public class AuthServiceImpl implements AuthService {
     ResponseCookie refreshTokenCookie = cookieService.deleteRefreshTokenCookie();
 
     return new AuthResponse(new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), null);
+  }
+
+  public SuccessResponse resetPassword(PasswordResetRequest passwordResetRequest) {
+
+    String email = passwordResetRequest.getEmail();
+    log.debug("Password reset started for user: {}", email);
+
+    userRepository
+        .findByEmail(email)
+        .orElseThrow(
+            () -> {
+              log.debug("User with email: {} not found", email);
+              return new UserNotFoundException(email);
+            });
+
+    String otp = generateOtp();
+    log.debug("Otp for user: {} generated successfully", email);
+
+    redisService.saveOtp(email, otp, expirationMinutes);
+    log.debug("Otp saved to db successfully for user: {}", email);
+
+    try {
+      emailService.sendVerificationEmail(email, "Password reset", otp);
+    } catch (MessagingException e) {
+      log.error(
+          "Error during sending verification email for: {}. There details: {}",
+          email,
+          e.getMessage());
+      throw new EmailSendException("Failed to send verification email");
+    }
+
+    // todo add link to the verify page
+    String message =
+        String.format("An email with a password reset code has been sent to your email: %s", email);
+
+    return SuccessResponse.builder().message(message).build();
+  }
+
+  public SuccessResponse verifyOtp(PasswordResetTokenValidationDto request) {
+
+    log.debug("Verifying otp started");
+
+    return SuccessResponse.builder().build();
+    // todo
+    // get otp token from redis, no -> exception  "error": "Invalid or expired token. Please request
+    // a new password reset."
+    // check token expiry, no -> exception
+    // match provided token, no -> exception
+    // delete token from db if success
+
+    // return response like "Token is valid. You can now reset your password." and link to reset
+    // password
+    // also i need to generate jwt token that i will validate on the set-password endpoint or add
+    // email filed and use one endpoint to verify email and otp
+
+  }
+
+  private String generateOtp() {
+    Random random = new Random();
+    int code = random.nextInt(900000) + 100000;
+    return String.valueOf(code);
   }
 }

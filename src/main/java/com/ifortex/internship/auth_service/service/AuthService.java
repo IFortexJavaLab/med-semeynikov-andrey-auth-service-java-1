@@ -1,12 +1,16 @@
 package com.ifortex.internship.auth_service.service;
 
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetTokenValidationDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
+import com.ifortex.internship.auth_service.exception.custom.EmailSendException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
+import com.ifortex.internship.auth_service.exception.custom.UserNotFoundException;
 import com.ifortex.internship.auth_service.model.User;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -67,4 +71,22 @@ public interface AuthService {
    * @throws UserNotAuthenticatedException if the user is not authenticated.
    */
   AuthResponse logoutUser(String refreshToken);
+
+  /**
+   * Initiates the password reset process for a user by generating a one-time password (OTP) and
+   * sending it to the user's registered email address.
+   *
+   * @param passwordResetRequest the request containing the email address of the user who wants to
+   *     reset their password
+   * @return a {@link SuccessResponse} containing a message indicating the OTP has been sent to the
+   *     user's email
+   * @throws UserNotFoundException if no user is found with the specified email
+   * @throws EmailSendException if an error occurs while sending the verification email
+   */
+  SuccessResponse resetPassword(PasswordResetRequest passwordResetRequest);
+
+  // todo provide javadoc
+  SuccessResponse verifyOtp(PasswordResetTokenValidationDto passwordResetTokenValidationDto);
+
+  /*String generateOtp();*/
 }
