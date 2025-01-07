@@ -2,6 +2,7 @@ package com.ifortex.internship.auth_service.controller;
 
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetWithOtpDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
@@ -99,22 +100,22 @@ public class AuthController {
   }
 
   @PostMapping("/reset-password/request")
-  public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
+  public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
+
     log.info("Reset password attempt for user: {}", request.getEmail());
-
-    SuccessResponse response = authService.resetPassword(request);
-
+    SuccessResponse response = authService.requestPasswordReset(request);
     log.info("Email with otp to reset password was sent to the email: {}", request.getEmail());
 
     return ResponseEntity.ok().body(response);
   }
 
-  /*@PostMapping("/reset-password/verify")
-  public ResponseEntity<?> verifyOtp(@RequestBody PasswordResetTokenValidationDto request){
-    log.info("Verifying otp attempt for email: {}", request.getEmail());
+  @PostMapping("/reset-password/confirm")
+  public ResponseEntity<?> resetPasswordWithOtp(
+      @RequestBody @Valid PasswordResetWithOtpDto request) {
 
-    SuccessResponse response = authService.verifyOtp(request);
+    log.info("Reset password with otp attempt for email: {}", request.getEmail());
+    SuccessResponse response = authService.resetPasswordWithOtp(request);
 
-    return
-  }*/
+    return ResponseEntity.ok().body(response);
+  }
 }

@@ -2,12 +2,13 @@ package com.ifortex.internship.auth_service.service;
 
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
-import com.ifortex.internship.auth_service.dto.request.PasswordResetTokenValidationDto;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetWithOtpDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.auth_service.exception.custom.EmailSendException;
+import com.ifortex.internship.auth_service.exception.custom.InvalidOtpException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotFoundException;
@@ -73,20 +74,27 @@ public interface AuthService {
   AuthResponse logoutUser(String refreshToken);
 
   /**
-   * Initiates the password reset process for a user by generating a one-time password (OTP) and
-   * sending it to the user's registered email address.
+   * Initiates the password reset process for a user by generating and sending an OTP to their
+   * registered email.
    *
-   * @param passwordResetRequest the request containing the email address of the user who wants to
-   *     reset their password
-   * @return a {@link SuccessResponse} containing a message indicating the OTP has been sent to the
-   *     user's email
-   * @throws UserNotFoundException if no user is found with the specified email
-   * @throws EmailSendException if an error occurs while sending the verification email
+   * @param passwordResetRequest the request containing the user's email address for initiating the
+   *     password reset.
+   * @return a {@link SuccessResponse} containing a message indicating that the OTP was sent to the
+   *     user's email.
+   * @throws UserNotFoundException if the provided email is not found in the system.
+   * @throws EmailSendException if an error occurs while sending the OTP email to the user.
    */
-  SuccessResponse resetPassword(PasswordResetRequest passwordResetRequest);
+  SuccessResponse requestPasswordReset(PasswordResetRequest passwordResetRequest);
 
-  // todo provide javadoc
-  SuccessResponse verifyOtp(PasswordResetTokenValidationDto passwordResetTokenValidationDto);
-
-  /*String generateOtp();*/
+  /**
+   * Resets the user's password using a one-time password (OTP) sent to their email.
+   *
+   * @param passwordResetWithOtpDto the {@link PasswordResetWithOtpDto} containing the user's email,
+   *     OTP, new password, and password confirmation.
+   * @return a {@link SuccessResponse} containing a message indicating that the password was
+   *     successfully reset.
+   * @throws InvalidOtpException if the provided OTP does not match the stored OTP.
+   * @throws PasswordMismatchException if the new password and its confirmation do not match.
+   */
+  SuccessResponse resetPasswordWithOtp(PasswordResetWithOtpDto passwordResetWithOtpDto);
 }

@@ -2,7 +2,7 @@ package com.ifortex.internship.auth_service.service.impl;
 
 import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
-import com.ifortex.internship.auth_service.dto.request.PasswordResetTokenValidationDto;
+import com.ifortex.internship.auth_service.dto.request.PasswordResetWithOtpDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
@@ -10,6 +10,7 @@ import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.email.EmailService;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.auth_service.exception.custom.EmailSendException;
+import com.ifortex.internship.auth_service.exception.custom.InvalidOtpException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.RoleNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
@@ -26,6 +27,7 @@ import com.ifortex.internship.auth_service.service.AuthService;
 import com.ifortex.internship.auth_service.service.CookieService;
 import com.ifortex.internship.auth_service.service.RedisService;
 import com.ifortex.internship.auth_service.service.TokenService;
+import com.ifortex.internship.auth_service.service.UserService;
 import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,11 +61,12 @@ public class AuthServiceImpl implements AuthService {
   private final RoleRepository roleRepository;
   private final EmailService emailService;
   private final RedisService redisService;
-  
+  private final UserService userService;
+
   @Getter
   @Value("${app.otp.expirationMinutes}")
   private int expirationMinutes;
-  
+
   @Transactional
   public SuccessResponse register(RegistrationRequest request) {
 
@@ -163,10 +166,10 @@ public class AuthServiceImpl implements AuthService {
     return new AuthResponse(new CookieTokensResponse(accessTokenCookie, refreshTokenCookie), null);
   }
 
-  public SuccessResponse resetPassword(PasswordResetRequest passwordResetRequest) {
+  public SuccessResponse requestPasswordReset(PasswordResetRequest passwordResetRequest) {
 
     String email = passwordResetRequest.getEmail();
-    log.debug("Password reset started for user: {}", email);
+    log.debug("Initiating password reset for email: {}", email);
 
     userRepository
         .findByEmail(email)
@@ -192,30 +195,57 @@ public class AuthServiceImpl implements AuthService {
       throw new EmailSendException("Failed to send verification email");
     }
 
-    // todo add link to the verify page
+    // feature generate link dynamically
+    String resetPasswordLink = "http://localhost:8081/api/v1/auth/reset-password/request";
     String message =
-        String.format("An email with a password reset code has been sent to your email: %s", email);
+        String.format(
+            "An email with a password reset code has been sent to your email: %s, please follow this link: %s",
+            email, resetPasswordLink);
 
     return SuccessResponse.builder().message(message).build();
   }
 
-  public SuccessResponse verifyOtp(PasswordResetTokenValidationDto request) {
+  public SuccessResponse resetPasswordWithOtp(PasswordResetWithOtpDto request) {
 
-    log.debug("Verifying otp started");
+    log.debug("Reset password with otp started");
 
-    return SuccessResponse.builder().build();
-    // todo
-    // get otp token from redis, no -> exception  "error": "Invalid or expired token. Please request
-    // a new password reset."
-    // check token expiry, no -> exception
-    // match provided token, no -> exception
-    // delete token from db if success
+    String userEmail = request.getEmail();
+    String userOtp = request.getOtp();
+    String storedOtp = redisService.getOtp(userEmail);
 
-    // return response like "Token is valid. You can now reset your password." and link to reset
-    // password
-    // also i need to generate jwt token that i will validate on the set-password endpoint or add
-    // email filed and use one endpoint to verify email and otp
+    if (!userOtp.equals(storedOtp)) {
+      log.debug("Invalid OTP provided for email: {}", userEmail);
+      log.info("Failed to reset password for user: {}", userEmail);
+      throw new InvalidOtpException("Invalid OTP provided. Please try again.");
+    }
 
+    boolean passwordMismatch = !request.getNewPassword().equals(request.getPasswordConfirmation());
+    if (passwordMismatch) {
+      log.debug("Password and confirmation password do not match.");
+      log.info("Failed to reset password for user: {}", userEmail);
+      throw new PasswordMismatchException("Password and confirmation password do not match.");
+    }
+
+    var user = userService.findUserByEmail(userEmail);
+
+    String newEncodedPassword = passwordEncoder.encode(request.getNewPassword());
+    user.setPassword(newEncodedPassword);
+    user.setUpdatedAt(LocalDateTime.now());
+    userRepository.save(user);
+
+    redisService.deleteOtp(userEmail);
+
+    log.info("User with email: {} successfully changed password", userEmail);
+
+    // feature refactor it to generate link dynamically
+    String link = "http://localhost:8081/api/v1/auth/login";
+
+    return SuccessResponse.builder()
+        .message(
+            String.format(
+                "Changed password successfully for user with email %s, please login again using this link: %s",
+                user.getEmail(), link))
+        .build();
   }
 
   private String generateOtp() {
