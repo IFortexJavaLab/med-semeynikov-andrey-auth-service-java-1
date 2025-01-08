@@ -1,6 +1,6 @@
 package com.ifortex.internship.authservice.model;
 
-import com.ifortex.internship.authservice.model.constant.ERole;
+import com.ifortex.internship.authservice.model.constant.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,5 +23,5 @@ public class Role {
 
   @Enumerated(EnumType.STRING)
   @Column(length = 50)
-  private ERole name;
+  private UserRole name;
 }

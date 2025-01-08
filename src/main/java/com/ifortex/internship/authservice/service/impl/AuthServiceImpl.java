@@ -15,7 +15,7 @@ import com.ifortex.internship.authservice.exception.custom.InvalidOtpException;
 import com.ifortex.internship.authservice.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.authservice.exception.custom.RoleNotFoundException;
 import com.ifortex.internship.authservice.exception.custom.UserNotAuthenticatedException;
-import com.ifortex.internship.authservice.model.constant.ERole;
+import com.ifortex.internship.authservice.model.constant.UserRole;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.Role;
 import com.ifortex.internship.authservice.model.User;
@@ -93,10 +93,10 @@ public class AuthServiceImpl implements AuthService {
     // user do not send role during registration
     Role nonSubscribedUser =
         roleRepository
-            .findByName(ERole.ROLE_NON_SUBSCRIBED_USER)
+            .findByName(UserRole.ROLE_NON_SUBSCRIBED_USER)
             .orElseThrow(
                 () -> {
-                  log.error("Role: {} is not found", ERole.ROLE_NON_SUBSCRIBED_USER);
+                  log.error("Role: {} is not found", UserRole.ROLE_NON_SUBSCRIBED_USER);
                   return new RoleNotFoundException("Role NON_SUBSCRIBED_USER is not found");
                 });
 

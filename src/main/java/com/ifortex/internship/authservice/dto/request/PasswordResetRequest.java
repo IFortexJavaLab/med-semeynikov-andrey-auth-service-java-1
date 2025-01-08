@@ -10,5 +10,5 @@ import lombok.Setter;
 public class PasswordResetRequest {
   @Email(message = "Invalid email format")
   @NotBlank(message = "Email is required")
-  String email;
+  private String email;
 }
