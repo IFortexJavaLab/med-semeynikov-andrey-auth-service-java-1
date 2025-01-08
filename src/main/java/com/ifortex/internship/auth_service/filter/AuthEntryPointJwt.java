@@ -28,7 +28,7 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
     String jsonResponse =
         String.format(
             "{\"status\": %d, \"message\": \"%s\"}",
-            HttpServletResponse.SC_UNAUTHORIZED, "Access is denied, please login again");
+            HttpServletResponse.SC_UNAUTHORIZED, "Access is denied, please log in again");
 
     response.getWriter().write(jsonResponse);
     response.getWriter().flush();

@@ -15,7 +15,7 @@ import com.ifortex.internship.auth_service.exception.custom.InvalidOtpException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
 import com.ifortex.internship.auth_service.exception.custom.RoleNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
-import com.ifortex.internship.auth_service.model.ERole;
+import com.ifortex.internship.auth_service.model.constant.ERole;
 import com.ifortex.internship.auth_service.model.RefreshToken;
 import com.ifortex.internship.auth_service.model.Role;
 import com.ifortex.internship.auth_service.model.User;

@@ -1,5 +1,6 @@
 package com.ifortex.internship.auth_service.model;
 
+import com.ifortex.internship.auth_service.model.constant.ERole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -24,27 +24,23 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
 
   public User findUserById(Long id) {
-    User user =
-        userRepository
-            .findById(id)
-            .orElseThrow(
-                () -> {
-                  log.error("User with ID: {} not found", id);
-                  return new UserNotFoundException(id);
-                });
-    return user;
+    return userRepository
+        .findById(id)
+        .orElseThrow(
+            () -> {
+              log.error("User with ID: {} not found", id);
+              return new UserNotFoundException(id);
+            });
   }
 
   public User findUserByEmail(String email) {
-    User user =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(
-                () -> {
-                  log.error("User with email: {} not found", email);
-                  return new UserNotFoundException(email);
-                });
-    return user;
+    return userRepository
+        .findByEmail(email)
+        .orElseThrow(
+            () -> {
+              log.error("User with email: {} not found", email);
+              return new UserNotFoundException(email);
+            });
   }
 
   public SuccessResponse changePassword(ChangePasswordRequest request, String userEmail) {
@@ -89,7 +85,7 @@ public class UserServiceImpl implements UserService {
     return SuccessResponse.builder()
         .message(
             String.format(
-                "Changed password successfully for user with email %s, please login again using this link: %s",
+                "Changed password successfully for user with email %s, please log in again using this link: %s",
                 user.getEmail(), link))
         .build();
   }

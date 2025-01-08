@@ -50,6 +50,6 @@ public class EmailService {
 
     emailSender.send(message);
 
-    log.debug("Email with otp was send to email: {}", to);
+    log.debug("Email with OTP was send to email: {}", to);
   }
 }

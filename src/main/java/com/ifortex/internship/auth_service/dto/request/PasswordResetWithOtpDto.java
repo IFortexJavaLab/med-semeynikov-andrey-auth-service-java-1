@@ -15,6 +15,7 @@ public class PasswordResetWithOtpDto {
   private String email;
 
   @NotBlank(message = "One time password is required")
+  @Pattern(regexp = "\\d{6}", message = "One time password must consist of exactly 6 digits")
   private String otp;
 
   @NotBlank

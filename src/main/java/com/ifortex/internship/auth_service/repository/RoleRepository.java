@@ -1,6 +1,6 @@
 package com.ifortex.internship.auth_service.repository;
 
-import com.ifortex.internship.auth_service.model.ERole;
+import com.ifortex.internship.auth_service.model.constant.ERole;
 import com.ifortex.internship.auth_service.model.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

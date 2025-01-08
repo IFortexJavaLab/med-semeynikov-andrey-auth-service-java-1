@@ -1,4 +1,4 @@
-package com.ifortex.internship.auth_service.model;
+package com.ifortex.internship.auth_service.model.constant;
 
 public enum ERole {
   ROLE_SUPER_ADMIN,
