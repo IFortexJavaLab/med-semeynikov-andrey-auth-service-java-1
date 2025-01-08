@@ -16,6 +16,7 @@ public class UserDetailsImpl implements UserDetails {
   private Long id;
   private String email;
   @JsonIgnore private String password;
+  private boolean isTwoFactorEnabled;
   private Collection<? extends GrantedAuthority> authorities;
 
   @Override

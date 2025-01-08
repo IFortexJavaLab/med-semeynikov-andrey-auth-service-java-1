@@ -4,17 +4,16 @@ import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetWithOtpDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
+import com.ifortex.internship.auth_service.dto.request.VerifyLoginOtpRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
 import com.ifortex.internship.auth_service.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.auth_service.exception.custom.EmailSendException;
 import com.ifortex.internship.auth_service.exception.custom.InvalidOtpException;
 import com.ifortex.internship.auth_service.exception.custom.PasswordMismatchException;
+import com.ifortex.internship.auth_service.exception.custom.RoleNotFoundException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotAuthenticatedException;
 import com.ifortex.internship.auth_service.exception.custom.UserNotFoundException;
-import com.ifortex.internship.auth_service.model.User;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Service interface for handling user login and authentication.
@@ -27,64 +26,78 @@ public interface AuthService {
   /**
    * Registers a new user in the system.
    *
-   * <p>This method performs the following steps:
+   * <p>This method validates the registration request, including email uniqueness and password
+   * confirmation. If valid, it hashes the user's password, assigns the default "non-subscribed
+   * user" role, and saves the user in the database.
    *
-   * <ul>
-   *   <li>Checks if the email is already registered.
-   *   <li>Validates that the password matches its confirmation.
-   *   <li>Encodes the password.
-   *   <li>Creates and saves a new {@link User} entity in the database.
-   * </ul>
-   *
-   * @param request the {@link RegistrationRequest} containing the user's email, password, and
-   *     confirmation password
-   * @return a {@link SuccessResponse} containing the success message and user ID
-   * @throws EmailAlreadyRegistered if the email is already registered
-   * @throws PasswordMismatchException if the password does not match its confirmation
+   * @param request the registration request containing user details like email, password, and
+   *     password confirmation
+   * @return a {@link SuccessResponse} indicating successful registration with a message
+   * @throws EmailAlreadyRegistered if the email is already registered in the system
+   * @throws PasswordMismatchException if the provided password and its confirmation do not match
+   * @throws RoleNotFoundException if the default "non-subscribed user" role is not found in the
+   *     database
    */
-  SuccessResponse register(RegistrationRequest request);
+  SuccessResponse registerUser(RegistrationRequest request);
 
   /**
-   * Authenticates a user based on their login credentials.
+   * Authenticates a user based on the provided login credentials.
    *
-   * <p>This method performs authentication using the provided {@link LoginRequest}, generates an
-   * access token and refresh token for the authenticated user, and returns a {@link AuthResponse}
-   * containing the tokens and user information.
+   * <p>This method validates the user's email and password using Spring Security's authentication
+   * manager. If the user has two-factor authentication (2FA) enabled, an OTP (one-time password) is
+   * generated and sent to the user's email. The method then responds with a message instructing the
+   * user to complete the 2FA verification.
    *
-   * @param loginRequest the LoginRequest containing the user's email and password
-   * @return a AuthResponse containing the generated tokens and user details
-   * @throws BadCredentialsException if the provided credentials are invalid
+   * <p>If 2FA is not enabled, the method generates access and refresh tokens for the user and
+   * returns them in the response.
+   *
+   * @param loginRequest the {@link LoginRequest} containing the user's email and password
+   * @return an {@link AuthResponse} containing a message and either instructions for 2FA or
+   *     authentication tokens
+   * @throws EmailSendException if an error occurs while sending the OTP email for 2FA
    */
   AuthResponse authenticateUser(LoginRequest loginRequest);
 
   /**
-   * Logs out the currently authenticated user by invalidating all their refresh tokens and clearing
-   * authentication cookies.
+   * Verifies the one-time password (OTP) for two-factor authentication during login.
    *
-   * <p>This method retrieves the currently authenticated user's details from the {@link
-   * SecurityContextHolder}. If the user is authenticated, their refresh token is deleted from the
-   * database, and cookies for access and refresh tokens are cleared. If the user is not
-   * authenticated (anonymous), a {@link UserNotAuthenticatedException} is thrown.
+   * <p>This method checks the provided OTP against the one stored for the given user email. If the
+   * OTP is valid, it generates authentication tokens (access and refresh) for the user and returns
+   * them in an {@link AuthResponse}.
    *
-   * @param refreshToken the refresh token of the user that will be deleted
-   * @return a AuthResponse containing the cleared access and refresh token cookies and the user ID
-   *     of the logged-out user.
-   * @throws UserNotAuthenticatedException if the user is not authenticated.
+   * @param verifyLoginOtpRequest the {@link VerifyLoginOtpRequest} containing the user's email and
+   *     OTP.
+   * @return an AuthResponse containing the authentication tokens and a success message.
+   * @throws InvalidOtpException if the OTP is expired or invalid.
+   * @throws UserNotFoundException if no user is found with the provided email address.
+   */
+  AuthResponse completeLoginWithOtp(VerifyLoginOtpRequest verifyLoginOtpRequest);
+
+  /**
+   * Logs out the currently authenticated user by invalidating the provided refresh token and
+   * clearing authentication cookies.
+   *
+   * @param refreshToken the refresh token to be invalidated
+   * @return an {@link AuthResponse} containing a success message, cleared authentication cookies,
+   *     and the user's email
+   * @throws UserNotAuthenticatedException if the user is not authenticated
    */
   AuthResponse logoutUser(String refreshToken);
 
   /**
-   * Initiates the password reset process for a user by generating and sending an OTP to their
-   * registered email.
+   * Initiates the password reset process for a user.
    *
-   * @param passwordResetRequest the request containing the user's email address for initiating the
-   *     password reset.
-   * @return a {@link SuccessResponse} containing a message indicating that the OTP was sent to the
-   *     user's email.
-   * @throws UserNotFoundException if the provided email is not found in the system.
-   * @throws EmailSendException if an error occurs while sending the OTP email to the user.
+   * <p>This method verifies that the provided email address is registered in the system. If the
+   * user is found, a one-time password (OTP) is generated and saved with a defined expiration time.
+   * An email is sent to the user containing the OTP and a link to reset their password.
+   *
+   * @param passwordResetRequest the password reset request containing the user's email address.
+   * @return a {@link SuccessResponse} containing a message confirming the initiation of the
+   *     password reset process and instructions to complete it.
+   * @throws UserNotFoundException if no user is found with the provided email address.
+   * @throws EmailSendException if an error occurs while sending the email with the OTP.
    */
-  SuccessResponse requestPasswordReset(PasswordResetRequest passwordResetRequest);
+  SuccessResponse initiatePasswordReset(PasswordResetRequest passwordResetRequest);
 
   /**
    * Resets the user's password using a one-time password (OTP) sent to their email.

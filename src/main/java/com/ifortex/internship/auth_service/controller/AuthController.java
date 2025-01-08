@@ -4,6 +4,7 @@ import com.ifortex.internship.auth_service.dto.request.LoginRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetRequest;
 import com.ifortex.internship.auth_service.dto.request.PasswordResetWithOtpDto;
 import com.ifortex.internship.auth_service.dto.request.RegistrationRequest;
+import com.ifortex.internship.auth_service.dto.request.VerifyLoginOtpRequest;
 import com.ifortex.internship.auth_service.dto.response.AuthResponse;
 import com.ifortex.internship.auth_service.dto.response.CookieTokensResponse;
 import com.ifortex.internship.auth_service.dto.response.SuccessResponse;
@@ -33,12 +34,9 @@ public class AuthController {
   public ResponseEntity<?> register(@RequestBody @Valid RegistrationRequest request) {
 
     log.info("Received registration request for email: {}", request.getEmail());
+    SuccessResponse response = authService.registerUser(request);
 
-    SuccessResponse response = authService.register(request);
-
-    return ResponseEntity.ok(
-        String.format(
-            "User with email: %s has been successfully registered", response.getMessage()));
+    return ResponseEntity.ok().body(response.getMessage());
   }
 
   @PostMapping("/login")
@@ -48,6 +46,28 @@ public class AuthController {
     AuthResponse authResponse = authService.authenticateUser(loginRequest);
 
     HttpHeaders headers = new HttpHeaders();
+    if (authResponse.getCookieTokensResponse() != null) {
+      headers.add(
+          HttpHeaders.SET_COOKIE,
+          authResponse.getCookieTokensResponse().getAccessCookie().toString());
+      headers.add(
+          HttpHeaders.SET_COOKIE,
+          authResponse.getCookieTokensResponse().getRefreshCookie().toString());
+
+      log.debug("Refresh and access tokens set in cookie for email: {}", loginRequest.getEmail());
+      log.info("User: {} successfully logged in", loginRequest.getEmail());
+    }
+
+    return ResponseEntity.ok().headers(headers).body(authResponse.getMessage());
+  }
+
+  @PostMapping("/verify-otp")
+  public ResponseEntity<?> completeLoginWithOtp(@RequestBody @Valid VerifyLoginOtpRequest request) {
+
+    log.info("Verify otp attempt to log in for email: {}", request.getEmail());
+    AuthResponse authResponse = authService.completeLoginWithOtp(request);
+
+    HttpHeaders headers = new HttpHeaders();
     headers.add(
         HttpHeaders.SET_COOKIE,
         authResponse.getCookieTokensResponse().getAccessCookie().toString());
@@ -55,12 +75,10 @@ public class AuthController {
         HttpHeaders.SET_COOKIE,
         authResponse.getCookieTokensResponse().getRefreshCookie().toString());
 
-    log.debug("Refresh and access tokens set in cookie for email: {}", loginRequest.getEmail());
-    log.info("User: {} successfully logged in", loginRequest.getEmail());
+    log.debug("Refresh and access tokens set in cookie for email: {}", request.getEmail());
+    log.info("User: {} successfully logged in", request.getEmail());
 
-    return ResponseEntity.ok()
-        .headers(headers)
-        .body(String.format("Login successful with email: %s", loginRequest.getEmail()));
+    return ResponseEntity.ok().headers(headers).body(authResponse.getMessage());
   }
 
   @PostMapping("/logout")
@@ -78,10 +96,30 @@ public class AuthController {
         HttpHeaders.SET_COOKIE,
         authResponse.getCookieTokensResponse().getRefreshCookie().toString());
 
-    log.debug("Clean tokens set in cookie for user with id = {}", authResponse.getUserId());
-    log.info("Logout successful for user with id = {}", authResponse.getUserId());
+    log.debug("Clean tokens set in cookie for user: {}", authResponse.getEmail());
+    log.info("Logout successful for user: {}", authResponse.getEmail());
 
-    return ResponseEntity.ok().headers(headers).body("Logout successful");
+    return ResponseEntity.ok().headers(headers).body(authResponse.getMessage());
+  }
+
+  @PostMapping("/reset-password/request")
+  public ResponseEntity<?> initiatePasswordReset(@RequestBody @Valid PasswordResetRequest request) {
+
+    log.info("Reset password attempt for user: {}", request.getEmail());
+    SuccessResponse response = authService.initiatePasswordReset(request);
+    log.info("Email with otp to reset password was sent to the email: {}", request.getEmail());
+
+    return ResponseEntity.ok().body(response);
+  }
+
+  @PostMapping("/reset-password/confirm")
+  public ResponseEntity<?> resetPasswordWithOtp(
+      @RequestBody @Valid PasswordResetWithOtpDto request) {
+
+    log.info("Reset password with otp attempt for email: {}", request.getEmail());
+    SuccessResponse response = authService.resetPasswordWithOtp(request);
+
+    return ResponseEntity.ok().body(response.getMessage());
   }
 
   @PostMapping("/refresh")
@@ -97,25 +135,5 @@ public class AuthController {
     log.info("Tokens refreshed successfully.");
 
     return ResponseEntity.ok().headers(headers).body("Tokens refreshed successfully");
-  }
-
-  @PostMapping("/reset-password/request")
-  public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetRequest request) {
-
-    log.info("Reset password attempt for user: {}", request.getEmail());
-    SuccessResponse response = authService.requestPasswordReset(request);
-    log.info("Email with otp to reset password was sent to the email: {}", request.getEmail());
-
-    return ResponseEntity.ok().body(response);
-  }
-
-  @PostMapping("/reset-password/confirm")
-  public ResponseEntity<?> resetPasswordWithOtp(
-      @RequestBody @Valid PasswordResetWithOtpDto request) {
-
-    log.info("Reset password with otp attempt for email: {}", request.getEmail());
-    SuccessResponse response = authService.resetPasswordWithOtp(request);
-
-    return ResponseEntity.ok().body(response);
   }
 }

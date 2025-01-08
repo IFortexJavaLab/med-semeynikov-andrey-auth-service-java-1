@@ -39,6 +39,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         .id(user.getId())
         .email(user.getEmail())
         .password(user.getPassword())
+        .isTwoFactorEnabled(user.isTwoFactorEnabled())
         .authorities(authorities)
         .build();
   }
