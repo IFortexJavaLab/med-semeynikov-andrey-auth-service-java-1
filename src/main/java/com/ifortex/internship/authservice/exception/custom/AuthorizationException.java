@@ -4,9 +4,9 @@ import com.ifortex.internship.authservice.exception.AuthServiceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class RoleNotFoundException extends AuthServiceException {
-  public RoleNotFoundException(String message) {
+@ResponseStatus(HttpStatus.UNAUTHORIZED)
+public class AuthorizationException extends AuthServiceException {
+  public AuthorizationException(String message) {
     super(message);
   }
 }

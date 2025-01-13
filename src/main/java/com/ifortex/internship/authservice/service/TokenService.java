@@ -1,7 +1,7 @@
 package com.ifortex.internship.authservice.service;
 
 import com.ifortex.internship.authservice.dto.response.CookieTokensResponse;
-import com.ifortex.internship.authservice.exception.custom.TokensRefreshException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public interface TokenService {
    *
    * @param refreshToken the refresh token to validate and refresh
    * @return a {@link CookieTokensResponse} containing the new tokens as cookies
-   * @throws TokensRefreshException if the refresh token is invalid or the associated user is not
+   * @throws AuthorizationException if the refresh token is invalid or the associated user is not
    *     found
    */
   CookieTokensResponse refreshTokens(String refreshToken);

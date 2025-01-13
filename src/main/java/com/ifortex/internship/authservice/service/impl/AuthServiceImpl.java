@@ -9,18 +9,17 @@ import com.ifortex.internship.authservice.dto.response.AuthResponse;
 import com.ifortex.internship.authservice.dto.response.CookieTokensResponse;
 import com.ifortex.internship.authservice.dto.response.SuccessResponse;
 import com.ifortex.internship.authservice.email.EmailService;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.authservice.exception.custom.EmailSendException;
-import com.ifortex.internship.authservice.exception.custom.InvalidOtpException;
-import com.ifortex.internship.authservice.exception.custom.PasswordMismatchException;
-import com.ifortex.internship.authservice.exception.custom.RoleNotFoundException;
-import com.ifortex.internship.authservice.exception.custom.UserNotAuthenticatedException;
-import com.ifortex.internship.authservice.model.constant.UserRole;
+import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.InvalidRequestException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.Role;
 import com.ifortex.internship.authservice.model.User;
 import com.ifortex.internship.authservice.model.UserDetailsImpl;
 import com.ifortex.internship.authservice.model.constant.RedisKeyPrefix;
+import com.ifortex.internship.authservice.model.constant.UserRole;
 import com.ifortex.internship.authservice.repository.RefreshTokenRepository;
 import com.ifortex.internship.authservice.repository.RoleRepository;
 import com.ifortex.internship.authservice.repository.UserRepository;
@@ -82,23 +81,16 @@ public class AuthServiceImpl implements AuthService {
     if (passwordMismatch) {
       log.debug("Password and confirmation password do not match.");
       log.info("Failed to register user");
-      throw new PasswordMismatchException("Password and confirmation password do not match.");
+      throw new InvalidRequestException("Password and confirmation password do not match.");
     }
 
     String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-    // how should I handle this exception?
-    // it can occurs only if there is no such role in the db
-    // but it responsibility of developer to create such fields in the db
-    // user do not send role during registration
     Role nonSubscribedUser =
         roleRepository
             .findByName(UserRole.ROLE_NON_SUBSCRIBED_USER)
             .orElseThrow(
-                () -> {
-                  log.error("Role: {} is not found", UserRole.ROLE_NON_SUBSCRIBED_USER);
-                  return new RoleNotFoundException("Role NON_SUBSCRIBED_USER is not found");
-                });
+                () -> new EntityNotFoundException("Role NON_SUBSCRIBED_USER is not found"));
 
     User user = new User();
     user.setEmail(request.getEmail());
@@ -144,7 +136,7 @@ public class AuthServiceImpl implements AuthService {
         emailService.sendVerificationEmail(userEmail, "2FA Verification Code", otp);
       } catch (MessagingException e) {
         log.error(
-            "Error during sending 2FA verification email for: {}. There details: {}",
+            "Error during sending 2FA verification email for: {}. StackTrace: {}",
             userEmail,
             e.getMessage());
         throw new EmailSendException("Failed to send 2FA verification email");
@@ -180,7 +172,7 @@ public class AuthServiceImpl implements AuthService {
     if (!otpFromRequest.equals(storedOtp)) {
       log.debug("OTP has expired or is invalid for email: {}", userEmail);
       log.info("Failed to reset password for user: {}", userEmail);
-      throw new InvalidOtpException("OTP has expired or is invalid. Please try again.");
+      throw new AuthorizationException("OTP has expired or is invalid. Please try again.");
     }
 
     var user = userService.findUserByEmail(userEmail);
@@ -203,7 +195,7 @@ public class AuthServiceImpl implements AuthService {
       log.debug("Refresh token deleted successfully for user: {}", userDetails.getUsername());
     } else {
       log.warn("Logout attempt by anonymous or unauthenticated user.");
-      throw new UserNotAuthenticatedException("User is not authenticated. Please log in.");
+      throw new AuthorizationException("User is not authenticated. Please log in.");
     }
 
     ResponseCookie accessTokenCookie = cookieService.deleteAccessTokenCookie();
@@ -262,14 +254,14 @@ public class AuthServiceImpl implements AuthService {
     if (!otpFromRequest.equals(storedOtp)) {
       log.debug("OTP has expired or is invalid for email: {}", userEmail);
       log.info("Failed to reset password for user: {}", userEmail);
-      throw new InvalidOtpException("Invalid OTP provided. Please try again.");
+      throw new AuthorizationException("Invalid OTP provided. Please try again.");
     }
 
     boolean passwordMismatch = !request.getNewPassword().equals(request.getPasswordConfirmation());
     if (passwordMismatch) {
       log.debug("Password and confirmation password do not match.");
       log.info("Failed to reset password for user: {}", userEmail);
-      throw new PasswordMismatchException("Password and confirmation password do not match.");
+      throw new InvalidRequestException("Password and confirmation password do not match.");
     }
 
     var user = userService.findUserByEmail(userEmail);

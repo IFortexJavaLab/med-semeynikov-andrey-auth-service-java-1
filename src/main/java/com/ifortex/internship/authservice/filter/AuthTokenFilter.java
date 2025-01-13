@@ -2,8 +2,7 @@ package com.ifortex.internship.authservice.filter;
 
 import com.ifortex.internship.authservice.dto.response.CookieTokensResponse;
 import com.ifortex.internship.authservice.exception.AuthServiceException;
-import com.ifortex.internship.authservice.exception.custom.InvalidJwtTokenException;
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.model.UserDetailsImpl;
 import com.ifortex.internship.authservice.service.TokenService;
 import jakarta.servlet.FilterChain;
@@ -25,8 +24,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Slf4j
 @RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
-
-  private static final int BEARER_PREFIX_LENGTH = 7;
 
   private final TokenService tokenService;
 
@@ -58,10 +55,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         return;
       }
 
-      throw new InvalidJwtTokenException("Invalid JWT token");
+      throw new AuthorizationException("Invalid JWT token");
 
     } catch (AuthServiceException e) {
-      log.debug(e.getMessage());
+      log.debug("Authentication service exception message: {}", e.getMessage());
       response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     } catch (Exception e) {
@@ -77,7 +74,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
     String refreshToken = tokenService.getRefreshTokenFromRequest(request);
     if (refreshToken == null) {
-      throw new RefreshTokenNotFoundException("Refresh token is missing, cannot refresh tokens");
+      throw new AuthorizationException("Refresh token is missing, cannot refresh tokens");
     }
 
     CookieTokensResponse tokensResponse = tokenService.refreshTokens(refreshToken);
@@ -111,6 +108,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
   }
 
   private String parseJwt(HttpServletRequest request) {
+    int BEARER_PREFIX_LENGTH = 7;
     String headerAuth = request.getHeader("Authorization");
     return headerAuth != null && headerAuth.startsWith("Bearer ")
         ? headerAuth.substring(BEARER_PREFIX_LENGTH)

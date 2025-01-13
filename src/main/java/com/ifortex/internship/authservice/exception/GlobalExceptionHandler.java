@@ -1,6 +1,5 @@
 package com.ifortex.internship.authservice.exception;
 
-import com.ifortex.internship.authservice.exception.custom.TokensRefreshException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -25,11 +24,6 @@ public class GlobalExceptionHandler {
     ResponseStatus statusAnnotation = ex.getClass().getAnnotation(ResponseStatus.class);
     HttpStatus status =
         statusAnnotation != null ? statusAnnotation.value() : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    if (ex instanceof TokensRefreshException) {
-      return new ResponseEntity<>(
-          "Failed to refresh access token. Please try logging in again.", status);
-    }
 
     return new ResponseEntity<>(ex.getMessage(), status);
   }
@@ -67,6 +61,7 @@ public class GlobalExceptionHandler {
   }
 
   // feature what should user see?
+  // todo authentication error
   @ExceptionHandler(MissingRequestCookieException.class)
   public ResponseEntity<Object> handleMissingRequestCookieException(
       MissingRequestCookieException ex) {

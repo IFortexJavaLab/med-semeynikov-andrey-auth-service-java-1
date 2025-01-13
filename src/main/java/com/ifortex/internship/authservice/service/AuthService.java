@@ -7,13 +7,11 @@ import com.ifortex.internship.authservice.dto.request.RegistrationRequest;
 import com.ifortex.internship.authservice.dto.request.VerifyLoginOtpRequest;
 import com.ifortex.internship.authservice.dto.response.AuthResponse;
 import com.ifortex.internship.authservice.dto.response.SuccessResponse;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.authservice.exception.custom.EmailSendException;
-import com.ifortex.internship.authservice.exception.custom.InvalidOtpException;
-import com.ifortex.internship.authservice.exception.custom.PasswordMismatchException;
-import com.ifortex.internship.authservice.exception.custom.RoleNotFoundException;
-import com.ifortex.internship.authservice.exception.custom.UserNotAuthenticatedException;
-import com.ifortex.internship.authservice.exception.custom.UserNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.InvalidRequestException;
 
 /**
  * Service interface for handling user login and authentication.
@@ -34,8 +32,8 @@ public interface AuthService {
    *     password confirmation
    * @return a {@link SuccessResponse} indicating successful registration with a message
    * @throws EmailAlreadyRegistered if the email is already registered in the system
-   * @throws PasswordMismatchException if the provided password and its confirmation do not match
-   * @throws RoleNotFoundException if the default "non-subscribed user" role is not found in the
+   * @throws InvalidRequestException if the provided password and its confirmation do not match
+   * @throws EntityNotFoundException if the default "non-subscribed user" role is not found in the
    *     database
    */
   SuccessResponse registerUser(RegistrationRequest request);
@@ -68,8 +66,8 @@ public interface AuthService {
    * @param verifyLoginOtpRequest the {@link VerifyLoginOtpRequest} containing the user's email and
    *     OTP.
    * @return an AuthResponse containing the authentication tokens and a success message.
-   * @throws InvalidOtpException if the OTP is expired or invalid.
-   * @throws UserNotFoundException if no user is found with the provided email address.
+   * @throws AuthorizationException if the OTP is expired or invalid.
+   * @throws EntityNotFoundException if no user is found with the provided email address.
    */
   AuthResponse completeLoginWithOtp(VerifyLoginOtpRequest verifyLoginOtpRequest);
 
@@ -80,7 +78,7 @@ public interface AuthService {
    * @param refreshToken the refresh token to be invalidated
    * @return an {@link AuthResponse} containing a success message, cleared authentication cookies,
    *     and the user's email
-   * @throws UserNotAuthenticatedException if the user is not authenticated
+   * @throws AuthorizationException if the user is not authenticated
    */
   AuthResponse logoutUser(String refreshToken);
 
@@ -94,7 +92,7 @@ public interface AuthService {
    * @param passwordResetRequest the password reset request containing the user's email address.
    * @return a {@link SuccessResponse} containing a message confirming the initiation of the
    *     password reset process and instructions to complete it.
-   * @throws UserNotFoundException if no user is found with the provided email address.
+   * @throws EntityNotFoundException if no user is found with the provided email address.
    * @throws EmailSendException if an error occurs while sending the email with the OTP.
    */
   SuccessResponse initiatePasswordReset(PasswordResetRequest passwordResetRequest);
@@ -106,8 +104,8 @@ public interface AuthService {
    *     OTP, new password, and password confirmation.
    * @return a {@link SuccessResponse} containing a message indicating that the password was
    *     successfully reset.
-   * @throws InvalidOtpException if the provided OTP does not match the stored OTP.
-   * @throws PasswordMismatchException if the new password and its confirmation do not match.
+   * @throws AuthorizationException if the provided OTP does not match the stored OTP.
+   * @throws InvalidRequestException if the new password and its confirmation do not match.
    */
   SuccessResponse resetPasswordWithOtp(PasswordResetWithOtpDto passwordResetWithOtpDto);
 }

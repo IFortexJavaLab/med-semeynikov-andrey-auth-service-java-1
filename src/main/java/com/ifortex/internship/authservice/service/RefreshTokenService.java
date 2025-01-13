@@ -1,8 +1,7 @@
 package com.ifortex.internship.authservice.service;
 
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenExpiredException;
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenNotFoundException;
-import com.ifortex.internship.authservice.exception.custom.UserNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
+import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 
 /**
@@ -20,19 +19,17 @@ public interface RefreshTokenService {
    *
    * @param userId the ID of the user for whom the refresh token is created
    * @return the created {@link RefreshToken}
-   * @throws UserNotFoundException if no user is found with the given ID
+   * @throws EntityNotFoundException if no user is found with the given ID
    */
   RefreshToken createRefreshToken(Long userId);
 
   /**
    * Verifies the expiration date of the given refresh token.
    *
-   * <p>If the token has expired, it is deleted, and a {@link RefreshTokenExpiredException} is
-   * thrown.
    *
    * @param refreshToken the RefreshToken to verify
    * @return the verified RefreshToken if it is still valid
-   * @throws RefreshTokenExpiredException if the token has expired
+   * @throws AuthorizationException if the token has expired
    */
   RefreshToken verifyExpiration(RefreshToken refreshToken);
 
@@ -50,7 +47,7 @@ public interface RefreshTokenService {
    *
    * @param token the token value to search for
    * @return the found RefreshToken
-   * @throws RefreshTokenNotFoundException if the token is not found
+   * @throws EntityNotFoundException if the token is not found
    */
   RefreshToken findByToken(String token);
 

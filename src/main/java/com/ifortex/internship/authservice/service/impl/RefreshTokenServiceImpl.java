@@ -1,8 +1,7 @@
 package com.ifortex.internship.authservice.service.impl;
 
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenExpiredException;
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenNotFoundException;
-import com.ifortex.internship.authservice.exception.custom.UserNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
+import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.User;
 import com.ifortex.internship.authservice.repository.RefreshTokenRepository;
@@ -34,8 +33,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             .findById(userId)
             .orElseThrow(
                 () -> {
-                  log.error("User with ID: {} not found", userId);
-                  return new UserNotFoundException(userId);
+                  log.debug("User with ID: {} not found", userId);
+                  return new EntityNotFoundException(
+                      String.format("User with ID: %d not found", userId));
                 });
 
     deleteTokensByUserId(userId);
@@ -51,18 +51,23 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
   }
 
   public RefreshToken verifyExpiration(RefreshToken refreshToken) {
+
     log.debug("Verifying refresh token expiration.");
+
     boolean isTokenExpired = refreshToken.getExpiryDate().isBefore(Instant.now());
+
     if (isTokenExpired) {
       log.warn(
-          "Refresh token expired. UserId={}, ExpiryDate={}",
+          "Refresh token has expired. UserId={}, ExpiryDate={}",
           refreshToken.getUser().getId(),
           refreshToken.getExpiryDate());
       log.debug("Deleting refresh token from db");
       refreshTokenRepository.delete(refreshToken);
       log.debug("Refresh token has been deleted from db");
-      throw new RefreshTokenExpiredException("Your session has expired. Please log in again.");
+
+      throw new AuthorizationException("Refresh token has expired.");
     }
+
     log.debug(
         "Refresh token is valid. UserId = {}, ExpiryDate = {}",
         refreshToken.getUser().getId(),
@@ -82,11 +87,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     return refreshTokenRepository
         .findByToken(token)
         .orElseThrow(
-            () -> {
-              log.error("Invalid refresh token: {}", token);
-              return new RefreshTokenNotFoundException(
-                  "Refresh token not found for the provided value: " + token);
-            });
+            () ->
+                new EntityNotFoundException(
+                    "Refresh token not found for the provided value: " + token));
   }
 
   public void deleteToken(RefreshToken token) {

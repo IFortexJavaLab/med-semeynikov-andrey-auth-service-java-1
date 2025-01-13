@@ -2,10 +2,9 @@ package com.ifortex.internship.authservice.service.impl;
 
 import com.ifortex.internship.authservice.dto.request.ChangePasswordRequest;
 import com.ifortex.internship.authservice.dto.response.SuccessResponse;
-import com.ifortex.internship.authservice.exception.custom.IncorrectPasswordException;
-import com.ifortex.internship.authservice.exception.custom.NewPasswordMatchesCurrentException;
-import com.ifortex.internship.authservice.exception.custom.PasswordMismatchException;
-import com.ifortex.internship.authservice.exception.custom.UserNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
+import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
+import com.ifortex.internship.authservice.exception.custom.InvalidRequestException;
 import com.ifortex.internship.authservice.model.User;
 import com.ifortex.internship.authservice.repository.UserRepository;
 import com.ifortex.internship.authservice.service.UserService;
@@ -28,8 +27,9 @@ public class UserServiceImpl implements UserService {
         .findById(id)
         .orElseThrow(
             () -> {
-              log.error("User with ID: {} not found", id);
-              return new UserNotFoundException(id);
+              log.debug("User with ID: {} not found", id);
+              return new EntityNotFoundException(
+                  String.format("User with email: %d not found", id));
             });
   }
 
@@ -38,8 +38,9 @@ public class UserServiceImpl implements UserService {
         .findByEmail(email)
         .orElseThrow(
             () -> {
-              log.error("User with email: {} not found", email);
-              return new UserNotFoundException(email);
+              log.debug("User with email: {} not found", email);
+              return new EntityNotFoundException(
+                  String.format("User with email: %s not found", email));
             });
   }
 
@@ -51,14 +52,14 @@ public class UserServiceImpl implements UserService {
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
       log.info("Incorrect password for user with email: {}", user.getEmail());
-      throw new IncorrectPasswordException(
+      throw new AuthorizationException(
           String.format("Incorrect password for user with email: %s", user.getEmail()));
     }
 
     if (request.getCurrentPassword().equals(request.getPasswordConfirmation())) {
       log.info(
           "Current password and new password are equal for user with email: {}", user.getEmail());
-      throw new NewPasswordMatchesCurrentException(
+      throw new InvalidRequestException(
           String.format(
               "Current password and new password are equal for user with email: %s",
               user.getEmail()));
@@ -69,7 +70,7 @@ public class UserServiceImpl implements UserService {
       log.info(
           "Password and password confirmation  do not match for user with email: {}",
           user.getEmail());
-      throw new PasswordMismatchException("Password and confirmation password do not match.");
+      throw new InvalidRequestException("Password and confirmation password do not match.");
     }
 
     String newEncodedPassword = passwordEncoder.encode(request.getNewPassword());

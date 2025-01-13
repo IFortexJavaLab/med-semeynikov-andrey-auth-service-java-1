@@ -2,10 +2,7 @@ package com.ifortex.internship.authservice.service.impl;
 
 import com.ifortex.internship.authservice.dto.response.CookieTokensResponse;
 import com.ifortex.internship.authservice.exception.AuthServiceException;
-import com.ifortex.internship.authservice.exception.custom.InvalidJwtTokenException;
-import com.ifortex.internship.authservice.exception.custom.ReauthenticationRequiredException;
-import com.ifortex.internship.authservice.exception.custom.RefreshTokenExpiredException;
-import com.ifortex.internship.authservice.exception.custom.UserNotFoundForRefreshTokenException;
+import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.User;
 import com.ifortex.internship.authservice.service.CookieService;
@@ -72,11 +69,6 @@ public class TokenServiceImpl implements TokenService {
 
       User user = storedRefreshtoken.getUser();
 
-      if (user == null) {
-        log.error("User not found for the refresh token: {}", refreshToken);
-        throw new UserNotFoundForRefreshTokenException("User not found for this refresh token");
-      }
-
       List<String> roles = user.getRoles().stream().map(role -> role.getName().name()).toList();
 
       String newAccessToken = generateAccessToken(user.getEmail(), roles);
@@ -89,12 +81,9 @@ public class TokenServiceImpl implements TokenService {
           cookieService.createRefreshTokenCookie(newRefreshToken.getToken());
 
       return new CookieTokensResponse(accessTokenCookie, refreshTokenCookie);
-    } catch (RefreshTokenExpiredException e) {
-      log.debug(e.getMessage());
-      throw e;
     } catch (AuthServiceException e) {
-      throw new ReauthenticationRequiredException(
-          "Your session has expired or your token is invalid. Please log in again.");
+      log.debug("Exception message: {}", e.getMessage());
+      throw new AuthorizationException("Your session has expired. Please log in again.");
     }
   }
 
@@ -106,16 +95,16 @@ public class TokenServiceImpl implements TokenService {
       return true;
     } catch (SignatureException e) {
       log.debug("Invalid JWT signature: {}", e.getMessage());
-      throw new InvalidJwtTokenException("JWT token is invalid. Please log in again.");
+      throw new AuthorizationException("JWT token is invalid. Please log in again.");
     } catch (MalformedJwtException e) {
       log.debug("Invalid JWT token: {}", e.getMessage());
-      throw new InvalidJwtTokenException("JWT token is malformed. Please log in again.");
+      throw new AuthorizationException("JWT token is malformed. Please log in again.");
     } catch (UnsupportedJwtException e) {
       log.debug("JWT token is unsupported: {}", e.getMessage());
-      throw new InvalidJwtTokenException("JWT token is unsupported. Please log in again.");
+      throw new AuthorizationException("JWT token is unsupported. Please log in again.");
     } catch (IllegalArgumentException e) {
       log.debug("JWT claims string is empty: {}", e.getMessage());
-      throw new InvalidJwtTokenException("JWT claims string is empty. Please log in again.");
+      throw new AuthorizationException("JWT claims string is empty. Please log in again.");
     } catch (ExpiredJwtException e) {
       log.debug("JWT token is expired: {}", e.getMessage());
     }
