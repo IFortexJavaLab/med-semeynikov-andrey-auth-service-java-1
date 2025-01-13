@@ -1,5 +1,6 @@
 package com.ifortex.internship.authservice.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -41,7 +42,7 @@ public class User {
   @Column(nullable = false)
   private boolean isTwoFactorEnabled = true;
 
-  @ManyToMany(fetch = FetchType.EAGER)
+  @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "user_roles",
       joinColumns = @JoinColumn(name = "user_id"),

@@ -1,5 +1,6 @@
 package com.ifortex.internship.authservice.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,7 +30,7 @@ public class RefreshToken {
   private Instant expiryDate;
   private Instant createdAt = Instant.now();
 
-  @OneToOne
+  @OneToOne(cascade = CascadeType.REMOVE)
   @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
   private User user;
 }
