@@ -10,4 +10,4 @@ logging:
     com:
       ifortex:
         internship:
-          auth_service: DEBUG
+          authservice: DEBUG
