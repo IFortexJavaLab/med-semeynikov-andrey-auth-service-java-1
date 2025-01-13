@@ -2,6 +2,7 @@ package com.ifortex.internship.authservice.service.impl;
 
 import com.ifortex.internship.authservice.model.User;
 import com.ifortex.internship.authservice.model.UserDetailsImpl;
+import com.ifortex.internship.authservice.model.constant.UserRole;
 import com.ifortex.internship.authservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,9 +32,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                         String.format("User not found with email: %s", username)));
 
     List<GrantedAuthority> authorities =
-        user.getRoles().stream()
-            .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-            .collect(Collectors.toList());
+        user.getRoles().isEmpty()
+            ? List.of(new SimpleGrantedAuthority(UserRole.ROLE_NON_SUBSCRIBED_USER.name()))
+            : user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                .collect(Collectors.toList());
 
     return UserDetailsImpl.builder()
         .id(user.getId())

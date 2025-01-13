@@ -5,6 +5,7 @@ import com.ifortex.internship.authservice.exception.AuthServiceException;
 import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.User;
+import com.ifortex.internship.authservice.model.constant.UserRole;
 import com.ifortex.internship.authservice.service.CookieService;
 import com.ifortex.internship.authservice.service.RefreshTokenService;
 import com.ifortex.internship.authservice.service.TokenService;
@@ -69,7 +70,10 @@ public class TokenServiceImpl implements TokenService {
 
       User user = storedRefreshtoken.getUser();
 
-      List<String> roles = user.getRoles().stream().map(role -> role.getName().name()).toList();
+      List<String> roles =
+          user.getRoles().isEmpty()
+              ? List.of(UserRole.ROLE_NON_SUBSCRIBED_USER.name())
+              : user.getRoles().stream().map(role -> role.getName().name()).toList();
 
       String newAccessToken = generateAccessToken(user.getEmail(), roles);
       log.debug("Access token refreshed successfully for user: {}", user.getEmail());

@@ -12,7 +12,6 @@ import com.ifortex.internship.authservice.email.EmailService;
 import com.ifortex.internship.authservice.exception.custom.AuthorizationException;
 import com.ifortex.internship.authservice.exception.custom.EmailAlreadyRegistered;
 import com.ifortex.internship.authservice.exception.custom.EmailSendException;
-import com.ifortex.internship.authservice.exception.custom.EntityNotFoundException;
 import com.ifortex.internship.authservice.exception.custom.InvalidRequestException;
 import com.ifortex.internship.authservice.model.RefreshToken;
 import com.ifortex.internship.authservice.model.Role;
@@ -30,6 +29,7 @@ import com.ifortex.internship.authservice.service.TokenService;
 import com.ifortex.internship.authservice.service.UserService;
 import jakarta.mail.MessagingException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -86,16 +86,16 @@ public class AuthServiceImpl implements AuthService {
 
     String hashedPassword = passwordEncoder.encode(request.getPassword());
 
-    Role nonSubscribedUser =
+    List<Role> roles =
         roleRepository
             .findByName(UserRole.ROLE_NON_SUBSCRIBED_USER)
-            .orElseThrow(
-                () -> new EntityNotFoundException("Role NON_SUBSCRIBED_USER is not found"));
+            .map(List::of)
+            .orElseGet(Collections::emptyList);
 
     User user = new User();
     user.setEmail(request.getEmail());
     user.setPassword(hashedPassword);
-    user.setRoles(List.of(nonSubscribedUser));
+    user.setRoles(roles);
     user.setCreatedAt(LocalDateTime.now());
     user.setUpdatedAt(LocalDateTime.now());
     userRepository.save(user);
@@ -178,7 +178,9 @@ public class AuthServiceImpl implements AuthService {
     var user = userService.findUserByEmail(userEmail);
 
     List<String> roles =
-        user.getRoles().stream().map(role -> role.getName().name()).collect(Collectors.toList());
+        user.getRoles().isEmpty()
+            ? List.of(UserRole.ROLE_NON_SUBSCRIBED_USER.name())
+            : user.getRoles().stream().map(role -> role.getName().name()).toList();
 
     return buildAuthResponse(userEmail, roles, user.getId());
   }
