@@ -60,8 +60,6 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(errors);
   }
 
-  // feature what should user see?
-  // todo authentication error
   @ExceptionHandler(MissingRequestCookieException.class)
   public ResponseEntity<Object> handleMissingRequestCookieException(
       MissingRequestCookieException ex) {
